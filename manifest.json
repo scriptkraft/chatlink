@@ -1,0 +1,17 @@
+{
+	"name": "Chatlink",
+    "version": "1.0",
+    "description": "View links for Hangouts Chat threads.",
+	"permissions": ["activeTab", "webRequest", "https://chat.google.com/room/*"],
+	"background": {
+		"scripts": ["./scripts/background.js"],
+		"persistent": true
+	},
+	"icons": {
+	    "16": "header.png",
+		"32": "header.png",
+		"48": "header.png",
+		"128": "header.png"
+	},
+	"manifest_version": 2
+}
