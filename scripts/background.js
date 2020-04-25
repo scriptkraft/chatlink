@@ -1,17 +1,44 @@
 'use strict';
 
+chrome.browserAction.onClicked.addListener(function (tab) {
+	chrome.storage.local.get(['chatlinkShortcut'], function(result) {
+		chrome.tabs.create({
+			url: result.chatlinkShortcut || "https://chat.google.com"
+		});
+	  });
+});
+
+chrome.tabs.onUpdated.addListener( function (tabId, changeInfo, tab) {
+	if (changeInfo.status == 'complete') {
+		chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
+			let url = tabs[0].url;
+			if (!!url && url.startsWith("https://chat.google.com")) {
+				chrome.storage.local.set({"chatlinkShortcut": url});
+			}
+		});
+	}
+  })
+
 chrome.webRequest.onCompleted.addListener(
 	function (details) {
-		if (details.url.startsWith("https://chat.google.com/_/DynamiteWebUi/data")) {
-			let url = 'https://chat.google.com/room/';
-			url += '${e.getAttribute("data-p").match(/,"(.+)",/)[1]}' + '/' + '${e.getAttribute("data-topic-id")}';
-			let tl = '`';
-			let insertHtml = `${tl}<div style="margin: 10px;" class="get-link"><a href="${url}">Link</a></div>${tl}`;
+		const baseUrlRegex = /^https:\/\/chat\.google\.com\/(u\/\d+\/)?/;
+		const requestSuffixRegex = /_\/DynamiteWebUi\/data/;
+		const requestRegex = new RegExp(baseUrlRegex.source + requestSuffixRegex.source);
+		if (!!details.url.match(requestRegex)) {
+			let url = details.url.match(baseUrlRegex)[0] + "room/";
+			url += '${superParent.getAttribute("data-p").match(/,"(.+)",/)[1]}' + '/' + '${superParent.getAttribute("data-topic-id")}';
+			const tl = '`';
+			let insertHtml = `${tl}<div style="text-align:center;margin-top:10px" class="get-link"><a href="${url}">&#128279;</a></div>${tl}`;
 			chrome.tabs.executeScript(details.tabId, {
 				code: `
-				[...document.querySelectorAll("div[data-soft-view-id^='/room/'] c-wiz[data-is-user-topic='true']")]
-				.filter(e => e.querySelector("div").className != "get-link")
-				.forEach((e,i) => e.innerHTML = ${insertHtml} + e.innerHTML);
+				[...document.querySelectorAll("div[data-soft-view-id^='/room/'] div[aria-label='Follow']")]
+				.filter(e => !e.getAttribute("get-link"))
+				.forEach((e,i) => {
+					const parent = e.parentNode;
+					const superParent = parent.parentNode.parentNode.parentNode;
+					e.setAttribute("get-link", "true");
+					parent.innerHTML = parent.innerHTML + ${insertHtml};
+				});
 				`,
 				runAt: 'document_idle'
 			});
