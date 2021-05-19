@@ -3,7 +3,7 @@
 chrome.browserAction.onClicked.addListener(function (tab) {
 	chrome.storage.local.get(['chatlinkShortcut'], function(result) {
 		chrome.tabs.create({
-			url: result.chatlinkShortcut || "https://chat.google.com"
+			url: result.chatlinkShortcut || "https://mail.google.com"
 		});
 	  });
 });
@@ -12,7 +12,7 @@ chrome.tabs.onUpdated.addListener( function (tabId, changeInfo, tab) {
 	if (changeInfo.status == 'complete') {
 		chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
 			let url = tabs[0].url;
-			if (!!url && url.startsWith("https://chat.google.com")) {
+			if (!!url && url.startsWith("https://mail.google.com")) {
 				chrome.storage.local.set({"chatlinkShortcut": url});
 			}
 		});
@@ -21,7 +21,7 @@ chrome.tabs.onUpdated.addListener( function (tabId, changeInfo, tab) {
 
 chrome.webRequest.onCompleted.addListener(
 	function (details) {
-		const baseUrlRegex = /^https:\/\/chat\.google\.com\/(u\/\d+\/)?/;
+		const baseUrlRegex = /^https:\/\/mail\.google\.com\/(u\/\d+\/)?/;
 		const requestSuffixRegex = /_\/DynamiteWebUi\/data/;
 		const requestRegex = new RegExp(baseUrlRegex.source + requestSuffixRegex.source);
 		if (!!details.url.match(requestRegex)) {
@@ -44,6 +44,6 @@ chrome.webRequest.onCompleted.addListener(
 			});
 		}
 	}, {
-		urls: ["https://chat.google.com/*"]
+		urls: ["https://mail.google.com/*"]
 	}
 );
